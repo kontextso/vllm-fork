@@ -11,6 +11,13 @@ from fastapi import Request
 from vllm.config import ModelConfig
 from vllm.engine.protocol import EngineClient
 from vllm.entrypoints.chat_utils import ConversationMessage, load_chat_template
+from vllm.engine.llm_engine import QueueOverflowError
+from vllm.engine.protocol import AsyncEngineClient
+from vllm.entrypoints.chat_utils import (ConversationMessage,
+                                         apply_hf_chat_template,
+                                         apply_mistral_chat_template,
+                                         load_chat_template,
+                                         parse_chat_messages_futures)
 from vllm.entrypoints.logger import RequestLogger
 from vllm.entrypoints.openai.protocol import (
     ChatCompletionLogProb, ChatCompletionLogProbs,
@@ -236,8 +243,10 @@ class OpenAIServingChat(OpenAIServing):
 
         try:
             return await self.chat_completion_full_generator(
-                request, result_generator, request_id, conversation, tokenizer,
-                request_metadata)
+                request, result_generator, request_id, conversation, tokenizer, request_metadata)
+        except QueueOverflowError as e:
+            msg, status_code = e.args
+            return self.create_error_response(msg, status_code=status_code)
         except ValueError as e:
             # TODO: Use a vllm-specific Validation Error
             return self.create_error_response(str(e))

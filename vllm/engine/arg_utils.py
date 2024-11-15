@@ -122,6 +122,7 @@ class EngineArgs:
     max_num_batched_tokens: Optional[int] = None
     max_num_seqs: int = 256
     max_logprobs: int = 20  # Default value for OpenAI Chat Completions API
+    max_queue_length: int = -1
     disable_log_stats: bool = False
     revision: Optional[str] = None
     code_revision: Optional[str] = None
@@ -484,6 +485,12 @@ class EngineArgs:
             default=EngineArgs.max_logprobs,
             help=('Max number of log probs to return logprobs is specified in'
                   ' SamplingParams.'))
+        parser.add_argument(
+            '--max-queue-length',
+            type=int,
+            default=EngineArgs.max_queue_length,
+            help='The maximum number of requests allowed in the waiting queue.'
+        )
         parser.add_argument('--disable-log-stats',
                             action='store_true',
                             help='Disable logging statistics.')
@@ -1085,6 +1092,7 @@ class EngineArgs:
             task=model_config.task,
             max_num_batched_tokens=self.max_num_batched_tokens,
             max_num_seqs=self.max_num_seqs,
+            max_queue_length=self.max_queue_length,
             max_model_len=model_config.max_model_len,
             num_lookahead_slots=num_lookahead_slots,
             delay_factor=self.scheduler_delay_factor,

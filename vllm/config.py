@@ -1065,6 +1065,9 @@ class SchedulerConfig:
             iteration.
         max_model_len: Maximum length of a sequence (including prompt
             and generated text).
+        max_queue_length: The maximum number of requests 
+            allowed in the waiting queue.
+        use_v2_block_manager: Whether to use the BlockSpaceManagerV2 or not.
         num_lookahead_slots: The number of slots to allocate per sequence per
             step, beyond the known token ids. This is used in speculative
             decoding to store KV activations of tokens which may or may not be
@@ -1091,6 +1094,8 @@ class SchedulerConfig:
                  max_num_batched_tokens: Optional[int],
                  max_num_seqs: int,
                  max_model_len: int,
+                 max_queue_length: int = -1,
+                 use_v2_block_manager: bool = False,
                  num_lookahead_slots: int = 0,
                  delay_factor: float = 0.0,
                  enable_chunked_prefill: bool = False,
@@ -1140,10 +1145,14 @@ class SchedulerConfig:
         self.task: Final = task
         self.max_num_seqs = max_num_seqs
         self.max_model_len = max_model_len
+        self.max_queue_length = max_queue_length
+        self.use_v2_block_manager = use_v2_block_manager
         self.num_lookahead_slots = num_lookahead_slots
         self.delay_factor = delay_factor
         self.chunked_prefill_enabled = enable_chunked_prefill
         self.preemption_mode = preemption_mode
+        self.max_queue_length = max_queue_length
+
         self.num_scheduler_steps = num_scheduler_steps
         self.multi_step_stream_outputs = multi_step_stream_outputs
         self.send_delta_data = send_delta_data
@@ -1166,6 +1175,7 @@ class SchedulerConfig:
                 f"max_num_batched_tokens ({self.max_num_batched_tokens}) must "
                 "be greater than or equal to max_num_seqs "
                 f"({self.max_num_seqs}).")
+        # TODO: verify max_queue_length
 
         if self.num_lookahead_slots < 0:
             raise ValueError(
