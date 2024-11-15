@@ -10,14 +10,9 @@ from fastapi import Request
 
 from vllm.config import ModelConfig
 from vllm.engine.protocol import EngineClient
-from vllm.entrypoints.chat_utils import ConversationMessage, load_chat_template
 from vllm.engine.llm_engine import QueueOverflowError
-from vllm.engine.protocol import AsyncEngineClient
 from vllm.entrypoints.chat_utils import (ConversationMessage,
-                                         apply_hf_chat_template,
-                                         apply_mistral_chat_template,
-                                         load_chat_template,
-                                         parse_chat_messages_futures)
+                                         load_chat_template)
 from vllm.entrypoints.logger import RequestLogger
 from vllm.entrypoints.openai.protocol import (
     ChatCompletionLogProb, ChatCompletionLogProbs,
@@ -234,16 +229,17 @@ class OpenAIServingChat(OpenAIServing):
         if raw_request:
             result_generator = iterate_with_cancellation(
                 result_generator, raw_request.is_disconnected)
+        try:
 
-        # Streaming response
-        if request.stream:
-            return self.chat_completion_stream_generator(
+            # Streaming response
+            if request.stream:
+                return self.chat_completion_stream_generator(
+                    request, result_generator, request_id, conversation, tokenizer,
+                    request_metadata)
+
+            return await self.chat_completion_full_generator(
                 request, result_generator, request_id, conversation, tokenizer,
                 request_metadata)
-
-        try:
-            return await self.chat_completion_full_generator(
-                request, result_generator, request_id, conversation, tokenizer, request_metadata)
         except QueueOverflowError as e:
             msg, status_code = e.args
             return self.create_error_response(msg, status_code=status_code)

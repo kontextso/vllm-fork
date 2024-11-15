@@ -12,8 +12,6 @@ from vllm.entrypoints.logger import RequestLogger
 # yapf conflicts with isort for this block
 # yapf: disable
 from vllm.engine.llm_engine import QueueOverflowError
-from vllm.engine.protocol import AsyncEngineClient
-from vllm.entrypoints.logger import RequestLogger
 from vllm.entrypoints.openai.protocol import (CompletionLogProbs,
                                               CompletionRequest,
                                               CompletionResponse,
